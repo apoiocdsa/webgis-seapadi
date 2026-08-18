@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebGIS - Atualizacao Cadastral | SEAPADI-RJ</title>
+    <title>WebGIS - Atualização Cadastral | SEAPDI-RJ</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -34,58 +34,49 @@
     </style>
 </head>
 <body>
-    <div id="titulo-topo">WebGIS - Atualizacao Cadastral de Propriedades Rurais | SEAPADI-RJ</div>
+    <div id="titulo-topo">WebGIS - Atualização Cadastral de Propriedades Rurais | SEAPDI-RJ</div>
     <div id="map"></div>
     <div id="painel">
         <h2>Controle de Camadas</h2>
-
         <div class="filtro-grupo">
-            <label>Filtrar por Situacao:</label>
+            <label>Filtrar por Situação:</label>
             <select id="filtroSituacao" onchange="aplicarFiltros()">
                 <option value="">Todas</option>
             </select>
         </div>
-
         <div class="filtro-grupo">
-            <label>Filtrar por Municipio:</label>
+            <label>Filtrar por Município:</label>
             <select id="filtroMunicipio" onchange="aplicarFiltros()">
                 <option value="">Todos</option>
             </select>
         </div>
-
         <div class="filtro-grupo">
             <label>Filtrar por NUCDA:</label>
             <select id="filtroNucda" onchange="aplicarFiltros()">
                 <option value="">Todos</option>
             </select>
         </div>
-
         <div class="filtro-grupo">
             <label>Legenda:</label>
-            <div class="legenda-item"><div class="legenda-cor" style="background:#27ae60"></div>Novo / Posicao OK</div>
-            <div class="legenda-item"><div class="legenda-cor" style="background:#f39c12"></div>Atualizado / Posicao OK</div>
-            <div class="legenda-item"><div class="legenda-cor" style="background:#e74c3c"></div>Erro de Posicao</div>
+            <div class="legenda-item"><div class="legenda-cor" style="background:#27ae60"></div>Novo / Posição OK</div>
+            <div class="legenda-item"><div class="legenda-cor" style="background:#f39c12"></div>Atualizado / Posição OK</div>
+            <div class="legenda-item"><div class="legenda-cor" style="background:#e74c3c"></div>Erro de Posição</div>
             <div class="legenda-item"><div class="legenda-cor" style="background:#7f8c8d"></div>Fora do Estado</div>
         </div>
-
         <button class="btn-limpar" onclick="limparFiltros()">Limpar Filtros</button>
         <div id="info">Carregando dados...</div>
     </div>
-
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
     var map = L.map('map').setView([-22.5, -43.0], 7);
-
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: 'Tiles &copy; Esri'
     }).addTo(map);
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
         attribution: ''
     }).addTo(map);
-
     var allFeatures = [];
     var markersLayer = L.layerGroup().addTo(map);
-
     fetch('propriedades.geojson')
         .then(function(r) {
             if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -93,12 +84,9 @@
         })
         .then(function(data) {
             allFeatures = data.features || [];
-
-            // Popular TODOS os filtros dinamicamente a partir dos dados reais
             var situacoes = [];
             var municipios = [];
             var nucdas = [];
-
             allFeatures.forEach(function(f) {
                 var p = f.properties;
                 var sit = (p.situacao || '').toString().trim();
@@ -108,11 +96,9 @@
                 if (mun && municipios.indexOf(mun) === -1) municipios.push(mun);
                 if (nuc && nucdas.indexOf(nuc) === -1) nucdas.push(nuc);
             });
-
             situacoes.sort();
             municipios.sort();
             nucdas.sort();
-
             situacoes.forEach(function(s) {
                 var opt = document.createElement('option');
                 opt.value = s;
@@ -131,14 +117,12 @@
                 opt.textContent = n;
                 document.getElementById('filtroNucda').appendChild(opt);
             });
-
             aplicarFiltros();
         })
         .catch(function(err) {
             document.getElementById('info').innerHTML =
                 '<span style="color:red">Erro ao carregar: ' + err.message + '</span>';
         });
-
     function getCor(feature) {
         var sit = (feature.properties.situacao || '').toLowerCase();
         var status = (feature.properties.status_geo || '').toLowerCase();
@@ -148,31 +132,22 @@
         if (status.indexOf('erro') !== -1 || status.indexOf('diverg') !== -1) return '#e74c3c';
         return '#3498db';
     }
-
     function aplicarFiltros() {
         markersLayer.clearLayers();
-
         var fSit = document.getElementById('filtroSituacao').value;
         var fMun = document.getElementById('filtroMunicipio').value;
         var fNuc = document.getElementById('filtroNucda').value;
-
         var count = 0;
-
         allFeatures.forEach(function(feature) {
             var props = feature.properties;
-
-            // Comparacao EXATA - valores vem do mesmo dataset, entao sempre batem
             var sit = (props.situacao || '').toString();
             var mun = (props.municipio || '').toString();
             var nuc = (props.NUCDA || '').toString();
-
             if ((!fSit || sit === fSit) && (!fMun || mun === fMun) && (!fNuc || nuc === fNuc)) {
-
                 var cor = getCor(feature);
                 var coords = feature.geometry.coordinates;
                 var lat = coords[1];
                 var lng = coords[0];
-
                 var marker = L.circleMarker([lat, lng], {
                     radius: 6,
                     fillColor: cor,
@@ -180,28 +155,24 @@
                     weight: 1,
                     fillOpacity: 0.85
                 });
-
                 var popupHtml =
                     '<b>Propriedade:</b> ' + (props.codpropriedade || '-') + '<br>' +
                     '<b>Produtor:</b> ' + (props.nomeprodutor || '-') + '<br>' +
-                    '<b>Municipio:</b> ' + (props.municipio || '-') + '<br>' +
+                    '<b>Município:</b> ' + (props.municipio || '-') + '<br>' +
                     '<b>NUCDA:</b> ' + (props.NUCDA || '-') + '<br>' +
                     '<b>Status Cadastro:</b> ' + (props.st_atualz || '-') + '<br>' +
                     '<b>Status Geo:</b> ' + (props.status_geo || '-') + '<br>' +
-                    '<b>Situacao:</b> ' + (props.situacao || '-') + '<br>' +
+                    '<b>Situação:</b> ' + (props.situacao || '-') + '<br>' +
                     '<b>Cadastro:</b> ' + (props.cad || '-') + '<br>' +
-                    '<b>Atualizacao:</b> ' + (props.atualz || '-');
-
+                    '<b>Atualização:</b> ' + (props.atualz || '-');
                 marker.bindPopup(popupHtml);
                 marker.addTo(markersLayer);
                 count++;
             }
         });
-
         document.getElementById('info').innerHTML =
             '<b>' + count + '</b> propriedades exibidas';
     }
-
     function limparFiltros() {
         document.getElementById('filtroSituacao').value = '';
         document.getElementById('filtroMunicipio').value = '';
