@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebGIS - Atualização Cadastral | SEAPDI-RJ</title>
+    <title>WebGIS - Atualização Cadastral | SEAPADI-RJ</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -26,26 +26,26 @@
             z-index: 1000; background: rgba(44,62,80,0.9); color: white;
             padding: 8px 20px; border-radius: 6px; font-size: 14px; font-weight: bold;
         }
+        .btn-limpar {
+            background: #3498db; color: white; border: none; padding: 6px 12px;
+            border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 5px; width: 100%;
+        }
+        .btn-limpar:hover { background: #2980b9; }
     </style>
 </head>
 <body>
-    <div id="titulo-topo">WebGIS - Atualização Cadastral de Propriedades Rurais | SEAPDI-RJ</div>
+    <div id="titulo-topo">WebGIS - Atualização Cadastral de Propriedades Rurais | SEAPADI-RJ</div>
     <div id="map"></div>
     <div id="painel">
-        <h2>🗺️ Controle de Camadas</h2>
+        <h2>Controle de Camadas</h2>
         <div class="filtro-grupo">
-            <label>Filtrar por Situação:</label>
+            <label>Filtrar por Situacao:</label>
             <select id="filtroSituacao" onchange="aplicarFiltros()">
                 <option value="">Todas</option>
-                <option value="novo/ posição OK">Novo / Posição OK</option>
-                <option value="atualizado/ posição OK">Atualizado / Posição OK</option>
-                <option value="novo/ erro posição">Novo / Erro Posição</option>
-                <option value="atualizado/ erro posição">Atualizado / Erro Posição</option>
-                <option value="FORA_DO_ESTADO">Fora do Estado</option>
             </select>
         </div>
         <div class="filtro-grupo">
-            <label>Filtrar por Município:</label>
+            <label>Filtrar por Municipio:</label>
             <select id="filtroMunicipio" onchange="aplicarFiltros()">
                 <option value="">Todos</option>
             </select>
@@ -58,14 +58,14 @@
         </div>
         <div class="filtro-grupo">
             <label>Legenda:</label>
-            <div class="legenda-item"><div class="legenda-cor" style="background:#27ae60"></div>Novo / Posição OK</div>
-            <div class="legenda-item"><div class="legenda-cor" style="background:#f39c12"></div>Atualizado / Posição OK</div>
-            <div class="legenda-item"><div class="legenda-cor" style="background:#e74c3c"></div>Erro de Posição</div>
+            <div class="legenda-item"><div class="legenda-cor" style="background:#27ae60"></div>Novo / Posicao OK</div>
+            <div class="legenda-item"><div class="legenda-cor" style="background:#f39c12"></div>Atualizado / Posicao OK</div>
+            <div class="legenda-item"><div class="legenda-cor" style="background:#e74c3c"></div>Erro de Posicao</div>
             <div class="legenda-item"><div class="legenda-cor" style="background:#7f8c8d"></div>Fora do Estado</div>
         </div>
+        <button class="btn-limpar" onclick="limparFiltros()">Limpar Filtros</button>
         <div id="info"></div>
     </div>
-
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         var map = L.map('map').setView([-22.5, -43.0], 7);
@@ -75,32 +75,55 @@
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
             attribution: ''
         }).addTo(map);
-
         var allFeatures = [];
         var markersLayer = L.layerGroup().addTo(map);
 
         // Carregar GeoJSON
         fetch('propriedades.geojson')
-            .then(r => r.json())
+            .then(r => {
+                if (!r.ok) throw new Error('Nao foi possivel carregar propriedades.geojson');
+                return r.json();
+            })
             .then(data => {
-                allFeatures = data.features;
-
-                // Popular filtros de município e NUCDA
-                var municipios = [...new Set(allFeatures.map(f => f.properties.municipio).filter(Boolean))].sort();
-                var nucdas = [...new Set(allFeatures.map(f => f.properties.NUCDA).filter(Boolean))].sort();
-                municipios.forEach(m => { var opt = document.createElement('option'); opt.value = m; opt.text = m; document.getElementById('filtroMunicipio').appendChild(opt); });
-                nucdas.forEach(n => { var opt = document.createElement('option'); opt.value = n; opt.text = n; document.getElementById('filtroNucda').appendChild(opt); });
-
+                allFeatures = data.features || [];
+                // Popular filtro de SITUACAO dinamicamente (igual municipio e NUCDA)
+                var situacoes = [...new Set(allFeatures.map(f => (f.properties.situacao || '').toString()).filter(Boolean))].sort();
+                situacoes.forEach(s => {
+                    var opt = document.createElement('option');
+                    opt.value = s;
+                    opt.text = s;
+                    document.getElementById('filtroSituacao').appendChild(opt);
+                });
+                // Popular filtro de municipio
+                var municipios = [...new Set(allFeatures.map(f => (f.properties.municipio || '').toString()).filter(Boolean))].sort();
+                municipios.forEach(m => {
+                    var opt = document.createElement('option');
+                    opt.value = m;
+                    opt.text = m;
+                    document.getElementById('filtroMunicipio').appendChild(opt);
+                });
+                // Popular filtro de NUCDA
+                var nucdas = [...new Set(allFeatures.map(f => (f.properties.NUCDA || '').toString()).filter(Boolean))].sort();
+                nucdas.forEach(n => {
+                    var opt = document.createElement('option');
+                    opt.value = n;
+                    opt.text = n;
+                    document.getElementById('filtroNucda').appendChild(opt);
+                });
                 aplicarFiltros();
+            })
+            .catch(err => {
+                document.getElementById('info').innerHTML = '<span style="color:red">Erro ao carregar dados: ' + err.message + '</span>';
+                console.error('Erro:', err);
             });
 
         function getCor(feature) {
-            var sit = feature.properties.situacao || '';
-            var status = feature.properties.status_geo || '';
-            if (status === 'FORA_DO_ESTADO') return '#7f8c8d';
-            if (sit.includes('novo') && (status === 'posição OK')) return '#27ae60';
-            if (sit.includes('atualizado') && (status === 'posição OK')) return '#f39c12';
-            if (status === 'erro posição' || status === 'MUNICIPIO_DIVERGENTE') return '#e74c3c';
+            var sit = (feature.properties.situacao || '').toLowerCase();
+            var status = (feature.properties.status_geo || '').toLowerCase();
+            if (status.includes('fora')) return '#7f8c8d';
+            if (sit.includes('novo') && status.includes('ok')) return '#27ae60';
+            if (sit.includes('atualiz') && status.includes('ok')) return '#f39c12';
+            if (status.includes('erro') || status.includes('divergente')) return '#e74c3c';
             return '#3498db';
         }
 
@@ -110,37 +133,45 @@
             var fMun = document.getElementById('filtroMunicipio').value;
             var fNuc = document.getElementById('filtroNucda').value;
             var count = 0;
-
             allFeatures.forEach(feature => {
                 var props = feature.properties;
-                var sit = props.situacao || '';
-                var status = props.status_geo || '';
+                var sit = (props.situacao || '').toString();
+                var status = (props.status_geo || '').toString();
+                var mun = (props.municipio || '').toString();
+                var nuc = (props.NUCDA || '').toString();
 
-                var passaSit = !fSit || sit.includes(fSit) || status === fSit;
-                var passaMun = !fMun || props.municipio === fMun;
-                var passaNuc = !fNuc || props.NUCDA === fNuc;
+                var passaSit = !fSit || sit === fSit;
+                var passaMun = !fMun || mun === fMun;
+                var passaNuc = !fNuc || nuc === fNuc;
 
                 if (passaSit && passaMun && passaNuc) {
                     var cor = getCor(feature);
-                    var marker = L.circleMarker([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], {
+                    var coords = feature.geometry.coordinates;
+                    var marker = L.circleMarker([coords[1], coords[0]], {
                         radius: 5, fillColor: cor, color: '#333', weight: 1, fillOpacity: 0.8
                     });
-
                     var popup = '<b>Propriedade:</b> ' + (props.codpropriedade || '-') + '<br>'
                         + '<b>Produtor:</b> ' + (props.nomeprodutor || '-') + '<br>'
-                        + '<b>Município:</b> ' + (props.municipio || '-') + '<br>'
+                        + '<b>Municipio:</b> ' + (props.municipio || '-') + '<br>'
                         + '<b>NUCDA:</b> ' + (props.NUCDA || '-') + '<br>'
                         + '<b>Status Cadastro:</b> ' + (props.st_atualz || '-') + '<br>'
-                        + '<b>Status Geográfico:</b> ' + (props.status_geo || '-') + '<br>'
-                        + '<b>Situação:</b> ' + (props.situacao || '-') + '<br>'
+                        + '<b>Status Geografico:</b> ' + (props.status_geo || '-') + '<br>'
+                        + '<b>Situacao:</b> ' + (props.situacao || '-') + '<br>'
                         + '<b>Cadastro:</b> ' + (props.cad || '-') + '<br>'
-                        + '<b>Atualização:</b> ' + (props.atualz || '-');
+                        + '<b>Atualizacao:</b> ' + (props.atualz || '-');
                     marker.bindPopup(popup);
                     marker.addTo(markersLayer);
                     count++;
                 }
             });
             document.getElementById('info').innerHTML = '<b>' + count + '</b> propriedades exibidas';
+        }
+
+        function limparFiltros() {
+            document.getElementById('filtroSituacao').value = '';
+            document.getElementById('filtroMunicipio').value = '';
+            document.getElementById('filtroNucda').value = '';
+            aplicarFiltros();
         }
     </script>
 </body>
