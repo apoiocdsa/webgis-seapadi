@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGIS - Atualização Cadastral | SEAPDI-RJ</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; }
+        #map { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        #painel {
+            position: absolute; top: 10px; right: 10px; z-index: 1000;
+            background: white; padding: 15px; border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2); width: 280px; max-height: 90vh; overflow-y: auto;
+        }
+        #painel h2 { font-size: 16px; margin-bottom: 10px; color: #2c3e50; }
+        .filtro-grupo { margin-bottom: 12px; }
+        .filtro-grupo label { font-size: 13px; font-weight: bold; display: block; margin-bottom: 5px; }
+        .legenda-item { display: flex; align-items: center; margin: 4px 0; font-size: 13px; }
+        .legenda-cor { width: 16px; height: 16px; border-radius: 50%; margin-right: 8px; border: 1px solid #333; }
+        select { width: 100%; padding: 4px; font-size: 13px; }
+        #info { margin-top: 10px; font-size: 12px; color: #666; }
+        #titulo-topo {
+            position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+            z-index: 1000; background: rgba(44,62,80,0.9); color: white;
+            padding: 8px 20px; border-radius: 6px; font-size: 14px; font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="titulo-topo">WebGIS - Atualização Cadastral de Propriedades Rurais | SEAPDI-RJ</div>
+    <div id="map"></div>
+    <div id="painel">
+        <h2>🗺️ Controle de Camadas</h2>
+        <div class="filtro-grupo">
+            <label>Filtrar por Situação:</label>
+            <select id="filtroSituacao" onchange="aplicarFiltros()">
+                <option value="">Todas</option>
+                <option value="novo/ posição OK">Novo / Posição OK</option>
+                <option value="atualizado/ posição OK">Atualizado / Posição OK</option>
+                <option value="novo/ erro posição">Novo / Erro Posição</option>
+                <option value="atualizado/ erro posição">Atualizado / Erro Posição</option>
+                <option value="FORA_DO_ESTADO">Fora do Estado</option>
+            </select>
+        </div>
+        <div class="filtro-grupo">
+            <label>Filtrar por Município:</label>
+            <select id="filtroMunicipio" onchange="aplicarFiltros()">
+                <option value="">Todos</option>
+            </select>
+        </div>
+        <div class="filtro-grupo">
+            <label>Filtrar por NUCDA:</label>
+            <select id="filtroNucda" onchange="aplicarFiltros()">
+                <option value="">Todos</option>
+            </select>
+        </div>
+        <div class="filtro-grupo">
+            <label>Legenda:</label>
+            <div class="legenda-item"><div class="legenda-cor" style="background:#27ae60"></div>Novo / Posição OK</div>
+            <div class="legenda-item"><div class="legenda-cor" style="background:#f39c12"></div>Atualizado / Posição OK</div>
+            <div class="legenda-item"><div class="legenda-cor" style="background:#e74c3c"></div>Erro de Posição</div>
+            <div class="legenda-item"><div class="legenda-cor" style="background:#7f8c8d"></div>Fora do Estado</div>
+        </div>
+        <div id="info"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([-22.5, -43.0], 7);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri'
+        }).addTo(map);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+            attribution: ''
+        }).addTo(map);
+
+        var allFeatures = [];
+        var markersLayer = L.layerGroup().addTo(map);
+
+        // Carregar GeoJSON
+        fetch('propriedades.geojson')
+            .then(r => r.json())
+            .then(data => {
+                allFeatures = data.features;
+
+                // Popular filtros de município e NUCDA
+                var municipios = [...new Set(allFeatures.map(f => f.properties.municipio).filter(Boolean))].sort();
+                var nucdas = [...new Set(allFeatures.map(f => f.properties.NUCDA).filter(Boolean))].sort();
+                municipios.forEach(m => { var opt = document.createElement('option'); opt.value = m; opt.text = m; document.getElementById('filtroMunicipio').appendChild(opt); });
+                nucdas.forEach(n => { var opt = document.createElement('option'); opt.value = n; opt.text = n; document.getElementById('filtroNucda').appendChild(opt); });
+
+                aplicarFiltros();
+            });
+
+        function getCor(feature) {
+            var sit = feature.properties.situacao || '';
+            var status = feature.properties.status_geo || '';
+            if (status === 'FORA_DO_ESTADO') return '#7f8c8d';
+            if (sit.includes('novo') && (status === 'posição OK')) return '#27ae60';
+            if (sit.includes('atualizado') && (status === 'posição OK')) return '#f39c12';
+            if (status === 'erro posição' || status === 'MUNICIPIO_DIVERGENTE') return '#e74c3c';
+            return '#3498db';
+        }
+
+        function aplicarFiltros() {
+            markersLayer.clearLayers();
+            var fSit = document.getElementById('filtroSituacao').value;
+            var fMun = document.getElementById('filtroMunicipio').value;
+            var fNuc = document.getElementById('filtroNucda').value;
+            var count = 0;
+
+            allFeatures.forEach(feature => {
+                var props = feature.properties;
+                var sit = props.situacao || '';
+                var status = props.status_geo || '';
+
+                var passaSit = !fSit || sit.includes(fSit) || status === fSit;
+                var passaMun = !fMun || props.municipio === fMun;
+                var passaNuc = !fNuc || props.NUCDA === fNuc;
+
+                if (passaSit && passaMun && passaNuc) {
+                    var cor = getCor(feature);
+                    var marker = L.circleMarker([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], {
+                        radius: 5, fillColor: cor, color: '#333', weight: 1, fillOpacity: 0.8
+                    });
+
+                    var popup = '<b>Propriedade:</b> ' + (props.codpropriedade || '-') + '<br>'
+                        + '<b>Produtor:</b> ' + (props.nomeprodutor || '-') + '<br>'
+                        + '<b>Município:</b> ' + (props.municipio || '-') + '<br>'
+                        + '<b>NUCDA:</b> ' + (props.NUCDA || '-') + '<br>'
+                        + '<b>Status Cadastro:</b> ' + (props.st_atualz || '-') + '<br>'
+                        + '<b>Status Geográfico:</b> ' + (props.status_geo || '-') + '<br>'
+                        + '<b>Situação:</b> ' + (props.situacao || '-') + '<br>'
+                        + '<b>Cadastro:</b> ' + (props.cad || '-') + '<br>'
+                        + '<b>Atualização:</b> ' + (props.atualz || '-');
+                    marker.bindPopup(popup);
+                    marker.addTo(markersLayer);
+                    count++;
+                }
+            });
+            document.getElementById('info').innerHTML = '<b>' + count + '</b> propriedades exibidas';
+        }
+    </script>
+</body>
+</html>
