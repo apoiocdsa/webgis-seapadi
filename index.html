@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebGIS - Atualização Cadastral | SEAPADI-RJ</title>
+    <title>WebGIS - Atualizacao Cadastral | SEAPDI-RJ</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -34,46 +34,30 @@
     </style>
 </head>
 <body>
-    <div id="titulo-topo">WebGIS - Atualizacao Cadastral de Propriedades Rurais | SEAPADI-RJ</div>
+    <div id="titulo-topo">WebGIS - Atualizacao Cadastral de Propriedades Rurais | SEAPDI-RJ</div>
     <div id="map"></div>
     <div id="painel">
         <h2>Controle de Camadas</h2>
-
         <div class="filtro-grupo">
             <label>Filtrar por Mes:</label>
-            <select id="filtroMes" onchange="aplicarFiltros()">
-                <option value="">Todos</option>
-            </select>
+            <select id="filtroMes" onchange="aplicarFiltros()"><option value="">Todos</option></select>
         </div>
-
         <div class="filtro-grupo">
             <label>Filtrar por Ano:</label>
-            <select id="filtroAno" onchange="aplicarFiltros()">
-                <option value="">Todos</option>
-            </select>
+            <select id="filtroAno" onchange="aplicarFiltros()"><option value="">Todos</option></select>
         </div>
-
         <div class="filtro-grupo">
             <label>Filtrar por Situacao:</label>
-            <select id="filtroSituacao" onchange="aplicarFiltros()">
-                <option value="">Todas</option>
-            </select>
+            <select id="filtroSituacao" onchange="aplicarFiltros()"><option value="">Todas</option></select>
         </div>
-
         <div class="filtro-grupo">
             <label>Filtrar por Municipio:</label>
-            <select id="filtroMunicipio" onchange="aplicarFiltros()">
-                <option value="">Todos</option>
-            </select>
+            <select id="filtroMunicipio" onchange="aplicarFiltros()"><option value="">Todos</option></select>
         </div>
-
         <div class="filtro-grupo">
             <label>Filtrar por NUCDA:</label>
-            <select id="filtroNucda" onchange="aplicarFiltros()">
-                <option value="">Todos</option>
-            </select>
+            <select id="filtroNucda" onchange="aplicarFiltros()"><option value="">Todos</option></select>
         </div>
-
         <div class="filtro-grupo">
             <label>Legenda:</label>
             <div class="legenda-item"><div class="legenda-cor" style="background:#27ae60"></div>Novo / Posicao OK</div>
@@ -81,161 +65,94 @@
             <div class="legenda-item"><div class="legenda-cor" style="background:#e74c3c"></div>Erro de Posicao</div>
             <div class="legenda-item"><div class="legenda-cor" style="background:#7f8c8d"></div>Fora do Estado</div>
         </div>
-
         <button class="btn-limpar" onclick="limparFiltros()">Limpar Filtros</button>
         <div id="info">Carregando dados...</div>
     </div>
-
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
     var map = L.map('map').setView([-22.5, -43.0], 7);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri'
-    }).addTo(map);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-        attribution: ''
-    }).addTo(map);
-
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {attribution: 'Tiles &copy; Esri'}).addTo(map);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {attribution: ''}).addTo(map);
     var allFeatures = [];
     var markersLayer = L.layerGroup().addTo(map);
-
-    var ordemMeses = ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho',
-                      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    var ordemMeses = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
     fetch('propriedades.geojson?v=' + Date.now())
-        .then(function(r) {
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            return r.json();
-        })
+        .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
         .then(function(data) {
             allFeatures = data.features || [];
-
-            var meses = [];
-            var anos = [];
-            var situacoes = [];
-            var municipios = [];
-            var nucdas = [];
-
+            var meses=[], anos=[], situacoes=[], municipios=[], nucdas=[];
             allFeatures.forEach(function(f) {
                 var p = f.properties;
-                var mes = (p.mes || '').toString().trim();
-                var ano = (p.ano || '').toString().trim();
-                var sit = (p.situacao || '').toString().trim();
-                var mun = (p.municipio || '').toString().trim();
-                var nuc = (p.NUCDA || '').toString().trim();
-                if (mes && meses.indexOf(mes) === -1) meses.push(mes);
-                if (ano && anos.indexOf(ano) === -1) anos.push(ano);
-                if (sit && situacoes.indexOf(sit) === -1) situacoes.push(sit);
-                if (mun && municipios.indexOf(mun) === -1) municipios.push(mun);
-                if (nuc && nucdas.indexOf(nuc) === -1) nucdas.push(nuc);
+                var mes=(p.mes||'').toString().trim(), ano=(p.ano||'').toString().trim();
+                var sit=(p.situacao||'').toString().trim(), mun=(p.municipio||'').toString().trim();
+                var nuc=(p.NUCDA||'').toString().trim();
+                if(mes&&meses.indexOf(mes)===-1)meses.push(mes);
+                if(ano&&anos.indexOf(ano)===-1)anos.push(ano);
+                if(sit&&situacoes.indexOf(sit)===-1)situacoes.push(sit);
+                if(mun&&municipios.indexOf(mun)===-1)municipios.push(mun);
+                if(nuc&&nucdas.indexOf(nuc)===-1)nucdas.push(nuc);
             });
-
-            meses.sort(function(a, b) { return ordemMeses.indexOf(a) - ordemMeses.indexOf(b); });
-            anos.sort(function(a, b) { return parseInt(a) - parseInt(b); });
-            situacoes.sort();
-            municipios.sort();
-            nucdas.sort();
-
-            function popularSelect(id, valores) {
-                var select = document.getElementById(id);
-                valores.forEach(function(v) {
-                    var opt = document.createElement('option');
-                    opt.value = v;
-                    opt.textContent = v;
-                    select.appendChild(opt);
-                });
-            }
-
-            popularSelect('filtroMes', meses);
-            popularSelect('filtroAno', anos);
-            popularSelect('filtroSituacao', situacoes);
-            popularSelect('filtroMunicipio', municipios);
-            popularSelect('filtroNucda', nucdas);
-
+            meses.sort(function(a,b){return ordemMeses.indexOf(a)-ordemMeses.indexOf(b)});
+            anos.sort(function(a,b){return parseInt(a)-parseInt(b)});
+            situacoes.sort(); municipios.sort(); nucdas.sort();
+            function pop(id,vals){var s=document.getElementById(id);vals.forEach(function(v){var o=document.createElement('option');o.value=v;o.textContent=v;s.appendChild(o)});}
+            pop('filtroMes',meses); pop('filtroAno',anos); pop('filtroSituacao',situacoes);
+            pop('filtroMunicipio',municipios); pop('filtroNucda',nucdas);
             aplicarFiltros();
         })
-        .catch(function(err) {
-            document.getElementById('info').innerHTML =
-                '<span style="color:red">Erro ao carregar: ' + err.message + '</span>';
-        });
+        .catch(function(err){document.getElementById('info').innerHTML='<span style="color:red">Erro: '+err.message+'</span>';});
 
     function getCor(feature) {
-        var sit = (feature.properties.situacao || '').toLowerCase();
-        var status = (feature.properties.status_geo || '').toLowerCase();
-        if (status.indexOf('fora') !== -1) return '#7f8c8d';
-        if (sit.indexOf('novo') !== -1 && status.indexOf('ok') !== -1) return '#27ae60';
-        if (sit.indexOf('atualiz') !== -1 && status.indexOf('ok') !== -1) return '#f39c12';
-        if (status.indexOf('erro') !== -1 || status.indexOf('diverg') !== -1) return '#e74c3c';
+        var sit=(feature.properties.situacao||'').toLowerCase();
+        var status=(feature.properties.status_geo||'').toLowerCase();
+        if(status.indexOf('fora')!==-1)return '#7f8c8d';
+        if(sit.indexOf('novo')!==-1&&status.indexOf('ok')!==-1)return '#27ae60';
+        if(sit.indexOf('atualiz')!==-1&&status.indexOf('ok')!==-1)return '#f39c12';
+        if(status.indexOf('erro')!==-1||status.indexOf('diverg')!==-1)return '#e74c3c';
         return '#3498db';
     }
-
     function aplicarFiltros() {
         markersLayer.clearLayers();
-
-        var fMes = document.getElementById('filtroMes').value;
-        var fAno = document.getElementById('filtroAno').value;
-        var fSit = document.getElementById('filtroSituacao').value;
-        var fMun = document.getElementById('filtroMunicipio').value;
-        var fNuc = document.getElementById('filtroNucda').value;
-
-        var count = 0;
-
+        var fMes=document.getElementById('filtroMes').value;
+        var fAno=document.getElementById('filtroAno').value;
+        var fSit=document.getElementById('filtroSituacao').value;
+        var fMun=document.getElementById('filtroMunicipio').value;
+        var fNuc=document.getElementById('filtroNucda').value;
+        var count=0;
         allFeatures.forEach(function(feature) {
-            var props = feature.properties;
-
-            var mes = (props.mes || '').toString();
-            var ano = (props.ano || '').toString();
-            var sit = (props.situacao || '').toString();
-            var mun = (props.municipio || '').toString();
-            var nuc = (props.NUCDA || '').toString();
-
-            if ((!fMes || mes === fMes) &&
-                (!fAno || ano === fAno) &&
-                (!fSit || sit === fSit) &&
-                (!fMun || mun === fMun) &&
-                (!fNuc || nuc === fNuc)) {
-
-                var cor = getCor(feature);
-                var coords = feature.geometry.coordinates;
-                var lat = coords[1];
-                var lng = coords[0];
-
-                var marker = L.circleMarker([lat, lng], {
-                    radius: 6,
-                    fillColor: cor,
-                    color: '#333',
-                    weight: 1,
-                    fillOpacity: 0.85
-                });
-
-                var popupHtml =
-                    '<b>Propriedade:</b> ' + (props.codpropriedade || '-') + '<br>' +
-                    '<b>Produtor:</b> ' + (props.nomeprodutor || '-') + '<br>' +
-                    '<b>Municipio:</b> ' + (props.municipio || '-') + '<br>' +
-                    '<b>NUCDA:</b> ' + (props.NUCDA || '-') + '<br>' +
-                    '<b>Mes/Ano:</b> ' + (props.mes || '-') + '/' + (props.ano || '-') + '<br>' +
-                    '<b>Status Cadastro:</b> ' + (props.st_atualz || '-') + '<br>' +
-                    '<b>Status Geo:</b> ' + (props.status_geo || '-') + '<br>' +
-                    '<b>Situacao:</b> ' + (props.situacao || '-') + '<br>' +
-                    '<b>Cadastro:</b> ' + (props.cad || '-') + '<br>' +
-                    '<b>Atualizacao:</b> ' + (props.atualz || '-');
-
-                marker.bindPopup(popupHtml);
+            var p=feature.properties;
+            var mes=(p.mes||'').toString(), ano=(p.ano||'').toString();
+            var sit=(p.situacao||'').toString(), mun=(p.municipio||'').toString();
+            var nuc=(p.NUCDA||'').toString();
+            if((!fMes||mes===fMes)&&(!fAno||ano===fAno)&&(!fSit||sit===fSit)&&(!fMun||mun===fMun)&&(!fNuc||nuc===fNuc)) {
+                var cor=getCor(feature);
+                var coords=feature.geometry.coordinates;
+                var marker=L.circleMarker([coords[1],coords[0]],{radius:6,fillColor:cor,color:'#333',weight:1,fillOpacity:0.85});
+                marker.bindPopup(
+                    '<b>Propriedade:</b> '+(p.codpropriedade||'-')+'<br>'+
+                    '<b>Produtor:</b> '+(p.nomeprodutor||'-')+'<br>'+
+                    '<b>Municipio:</b> '+(p.municipio||'-')+'<br>'+
+                    '<b>NUCDA:</b> '+(p.NUCDA||'-')+'<br>'+
+                    '<b>Mes/Ano:</b> '+(p.mes||'-')+'/'+(p.ano||'-')+'<br>'+
+                    '<b>Status Cadastro:</b> '+(p.st_atualz||'-')+'<br>'+
+                    '<b>Status Geo:</b> '+(p.status_geo||'-')+'<br>'+
+                    '<b>Situacao:</b> '+(p.situacao||'-')+'<br>'+
+                    '<b>Cadastro:</b> '+(p.cad||'-')+'<br>'+
+                    '<b>Atualizacao:</b> '+(p.atualz||'-')
+                );
                 marker.addTo(markersLayer);
                 count++;
             }
         });
-
-        document.getElementById('info').innerHTML =
-            '<b>' + count + '</b> propriedades exibidas';
+        document.getElementById('info').innerHTML='<b>'+count+'</b> propriedades exibidas';
     }
-
     function limparFiltros() {
-        document.getElementById('filtroMes').value = '';
-        document.getElementById('filtroAno').value = '';
-        document.getElementById('filtroSituacao').value = '';
-        document.getElementById('filtroMunicipio').value = '';
-        document.getElementById('filtroNucda').value = '';
+        document.getElementById('filtroMes').value='';
+        document.getElementById('filtroAno').value='';
+        document.getElementById('filtroSituacao').value='';
+        document.getElementById('filtroMunicipio').value='';
+        document.getElementById('filtroNucda').value='';
         aplicarFiltros();
     }
     </script>
