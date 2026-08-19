@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>WebGIS - Atualizacao Cadastral | SEAPDI-RJ</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -77,7 +80,7 @@
     var markersLayer = L.layerGroup().addTo(map);
     var ordemMeses = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
-    fetch('propriedades.geojson?v=' + Date.now())
+    fetch('https://cdn.jsdelivr.net/gh/apoiocdsa/webgis-seapadi@main/propriedades.geojson?v=' + Date.now())
         .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
         .then(function(data) {
             allFeatures = data.features || [];
