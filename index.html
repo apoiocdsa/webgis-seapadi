@@ -99,7 +99,6 @@
     var allFeatures = [];
     var markersLayer = L.layerGroup().addTo(map);
 
-    // Ordem cronologica dos meses
     var ordemMeses = ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho',
                       'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
@@ -131,7 +130,6 @@
                 if (nuc && nucdas.indexOf(nuc) === -1) nucdas.push(nuc);
             });
 
-            // Ordenar meses cronologicamente, anos numericamente
             meses.sort(function(a, b) { return ordemMeses.indexOf(a) - ordemMeses.indexOf(b); });
             anos.sort(function(a, b) { return parseInt(a) - parseInt(b); });
             situacoes.sort();
