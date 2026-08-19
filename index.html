@@ -102,7 +102,7 @@
     var ordemMeses = ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho',
                       'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
-    fetch('propriedades.geojson')
+    fetch('propriedades.geojson?v=' + Date.now())
         .then(function(r) {
             if (!r.ok) throw new Error('HTTP ' + r.status);
             return r.json();
